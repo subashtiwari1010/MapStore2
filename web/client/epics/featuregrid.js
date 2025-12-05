@@ -325,7 +325,6 @@ export const featureGridBrowseData = (action$, store) =>
         const currentTypeName = get(store.getState(), "query.typeName");
         return Rx.Observable.of(
             ...(currentTypeName !== layer.name ? [reset()] : []),
-            setControlProperty('drawer', 'enabled', false),
             setLayer(layer.id),
             openFeatureGrid()
         ).merge(
@@ -919,10 +918,7 @@ export const resetGridOnLocationChange = action$ =>
         action$.ofType(LOCATION_CHANGE)
             .take(1)
             .switchMap(() =>
-                Rx.Observable.of(
-                    toggleViewMode(),
-                    closeFeatureGrid()
-                )
+                Rx.Observable.of(toggleViewMode())
             )
             .takeUntil(action$.ofType(CLOSE_FEATURE_GRID))
     );
@@ -940,7 +936,7 @@ export const autoCloseFeatureGridEpicOnDrowerOpen = (action$, store) =>
     action$.ofType(OPEN_FEATURE_GRID).switchMap(() =>
         action$.ofType(TOGGLE_CONTROL)
             .filter(action => action.control && action.control === 'drawer' && isFeatureGridOpen(store.getState()))
-            .switchMap(() => Rx.Observable.of(closeFeatureGrid(), selectFeatures([])))
+            .switchMap(() => Rx.Observable.of(selectFeatures([])))
             .takeUntil(action$.ofType(LOCATION_CHANGE))
     );
 export const askChangesConfirmOnFeatureGridClose = (action$, store) => action$.ofType(CLOSE_FEATURE_GRID_CONFIRM).switchMap( () => {
@@ -1027,7 +1023,6 @@ export const onOpenAdvancedSearch = (action$, store) =>
             // hide selected features from map
             selectFeatures([]),
             loadFilter(get(store.getState(), `featuregrid.advancedFilters["${selectedLayerIdSelector(store.getState())}"]`)),
-            closeFeatureGrid('queryPanel'),
             setControlProperty('queryPanel', "enabled", true)
         )
             .merge(
@@ -1064,11 +1059,6 @@ export const onFeatureGridZoomAll = (action$, store) =>
 export const resetControlsOnEnterInEditMode = (action$) =>
     action$.ofType(TOGGLE_MODE)
         .filter(a => a.mode === MODES.EDIT).map(() => resetControls(["query"]));
-export const closeIdentifyWhenOpenFeatureGrid = (action$) =>
-    action$.ofType(OPEN_FEATURE_GRID)
-        .switchMap(() => {
-            return Rx.Observable.of(closeIdentify());
-        });
 /**
  * start sync filter with wms layer
  *
@@ -1211,7 +1201,7 @@ export const hideFeatureGridOnDrawerOpenMobile = (action$, { getState } = {}) =>
             && getState().browser.mobile
             && drawerEnabledControlSelector(getState())
         )
-        .switchMap(() => Rx.Observable.of(hideMapinfoMarker(), closeFeatureGrid()));
+        .switchMap(() => Rx.Observable.of(hideMapinfoMarker()));
 export const hideDrawerOnFeatureGridOpenMobile = (action$, { getState } = {}) =>
     action$
         .ofType(FEATURE_INFO_CLICK)
